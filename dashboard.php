@@ -17,7 +17,17 @@ if ($connection->connect_error) {
     die("Connection failed: " . $connection->connect_error);
 }
 
+
+
 // Function to generate a random password based on user preferences
+// Parameters:
+// $length (int) - Length of the password to be generated (default is 12)
+// $includeNumbers (bool) - Whether to include numbers in the password (default is true)
+// $includeUppercase (bool) - Whether to include uppercase letters in the password (default is true)
+// $includeLowercase (bool) - Whether to include lowercase letters in the password (default is true)
+// $includeSpecialChars (bool) - Whether to include special characters in the password (default is true)
+// Returns:
+// (string) - Generated random password
 function generateRandomPassword($length = 12, $includeNumbers = true, $includeUppercase = true, $includeLowercase = true, $includeSpecialChars = true) {
     $characters = '';
     if ($includeNumbers) {
@@ -32,7 +42,6 @@ function generateRandomPassword($length = 12, $includeNumbers = true, $includeUp
     if ($includeSpecialChars) {
         $characters .= '!@#$%^&*()';
     }
-
     $charactersLength = strlen($characters);
     $randomPassword = '';
     for ($i = 0; $i < $length; $i++) {
