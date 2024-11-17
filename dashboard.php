@@ -51,7 +51,8 @@ function generateRandomPassword($length = 12, $includeNumbers = true, $includeUp
 }
 
 
-// Handle password storage
+
+// Handle the password storage
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['store_password'])) {
     $category_id = $_POST['category'];
     $website = htmlspecialchars($_POST['website']);
