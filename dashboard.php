@@ -2,32 +2,39 @@
 session_start();  // Start the session
 
 // Check if the user is logged in by verifying session variables
-// if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-//     // If the user is not logged in, redirect to the login page
-//     header('Location: login.php');
-//     exit();
-// }
+if (!isset($_SESSION['user_id'])) {
+    // If the user is not logged in, redirect to the login page
+    header('Location: login.php');
+    exit();
+}
 
 
 // Database connection
-$connection = new mysqli('localhost', 'root','', 'pms');
+$connection = new mysqli('localhost', 'root', '', 'pms');
 
 // Check connection
 if ($connection->connect_error) {
     die("Connection failed: " . $connection->connect_error);
 }
 
-
+// Function to check password strength
+function checkPasswordStrength($password) {
+    if (strlen($password) > 15 &&
+        preg_match('/[0-9]/', $password) &&
+        preg_match('/[A-Z]/', $password) &&
+        preg_match('/[a-z]/', $password) &&
+        preg_match('/[!@#$%^&*()]/', $password)) {
+        return 'Strong'; // Only mark strong if all conditions are met
+    } elseif (strlen($password) >= 8 &&
+              (preg_match('/[0-9]/', $password) ||
+               preg_match('/[A-Z]/', $password) ||
+               preg_match('/[!@#$%^&*()]/', $password))) {
+        return 'Medium'; // Medium if some but not all conditions are met
+    }
+    return 'Weak'; // Mark as weak otherwise
+}
 
 // Function to generate a random password based on user preferences
-// Parameters:
-// $length (int) - Length of the password to be generated (default is 12)
-// $includeNumbers (bool) - Whether to include numbers in the password (default is true)
-// $includeUppercase (bool) - Whether to include uppercase letters in the password (default is true)
-// $includeLowercase (bool) - Whether to include lowercase letters in the password (default is true)
-// $includeSpecialChars (bool) - Whether to include special characters in the password (default is true)
-// Returns:
-// (string) - Generated random password
 function generateRandomPassword($length = 12, $includeNumbers = true, $includeUppercase = true, $includeLowercase = true, $includeSpecialChars = true) {
     $characters = '';
     if ($includeNumbers) {
@@ -42,6 +49,7 @@ function generateRandomPassword($length = 12, $includeNumbers = true, $includeUp
     if ($includeSpecialChars) {
         $characters .= '!@#$%^&*()';
     }
+
     $charactersLength = strlen($characters);
     $randomPassword = '';
     for ($i = 0; $i < $length; $i++) {
@@ -50,35 +58,33 @@ function generateRandomPassword($length = 12, $includeNumbers = true, $includeUp
     return $randomPassword;
 }
 
-
-
-// Handle the password storage
+// Handle password storage
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['store_password'])) {
     $category_id = $_POST['category'];
     $website = htmlspecialchars($_POST['website']);
     $username = htmlspecialchars($_POST['username']);
     $password = htmlspecialchars($_POST['password']);
 
-    $stmt = $connection->prepare("INSERT INTO password (category_id, website, username, password) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("isss", $category_id, $website, $username, $password);
+    $stmt = $connection->prepare("INSERT INTO password (category_id, website, username, password, user_id) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssi", $category_id, $website, $username, $password, $_SESSION['user_id']);
     $stmt->execute();
     $stmt->close();
 }
 
-// Handle password search
-$searchResults = [];
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['search_password'])) {
-    $searchQuery = htmlspecialchars($_POST['search_query']);
-    $stmt = $connection->prepare("SELECT * FROM passwords WHERE website LIKE ?");
-    $searchTerm = "%$searchQuery%";
-    $stmt->bind_param("s", $searchTerm);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $searchResults[] = $row;
-    }
-    $stmt->close();
-}
+// // Handle password search
+// $searchResults = [];
+// if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['search_password'])) {
+//     $searchQuery = htmlspecialchars($_POST['search_query']);
+//     $stmt = $connection->prepare("SELECT * FROM passwords WHERE website LIKE ?");
+//     $searchTerm = "%$searchQuery%";
+//     $stmt->bind_param("s", $searchTerm);
+//     $stmt->execute();
+//     $result = $stmt->get_result();
+//     while ($row = $result->fetch_assoc()) {
+//         $searchResults[] = $row;
+//     }
+//     $stmt->close();
+// }
 
 // Fetch categories
 $categories = [];
@@ -89,15 +95,14 @@ while ($row = $result->fetch_assoc()) {
 
 $connection->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Password Vault</title>
-     <!-- Add Font Awesome for eye icon -->
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Add Font Awesome for eye icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -107,7 +112,7 @@ $connection->close();
         }
 
         .container {
-            width: 80%;
+            width: 97%;
             margin: 0 auto;
             padding: 20px;
             background-color: #fff;
@@ -124,24 +129,55 @@ $connection->close();
             font-size: 2em;
         }
 
-        .content {
-            margin-top: 20px;
+        .navbar {
+            background-color: #007bff;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
         }
 
-        .logout-button {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: #fff;
-            background-color: #007bff;
+        .navbar .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .navbar form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar input[type="text"] {
+            padding: 5px;
             border: none;
-            border-radius: 5px;
-            text-decoration: none;
+            border-radius: 3px;
+        }
+
+        .navbar button {
+            padding: 7px 15px;
+            border: none;
+            background-color: #0056b3;
+            color: #fff;
+            border-radius: 3px;
             cursor: pointer;
         }
 
-        .logout-button:hover {
-            background-color: #0056b3;
+        .navbar button:hover {
+            background-color: #004494;
+        }
+
+        .navbar .logout-button {
+            background-color: #dc3545;
+        }
+
+        .navbar .logout-button:hover {
+            background-color: #a71d2a;
+        }
+
+        .content {
+            margin-top: 20px;
         }
 
         .form-group {
@@ -193,6 +229,18 @@ $connection->close();
     </style>
 </head>
 <body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">Password Vault</div>
+        <form action="search.php" method="post">
+            <input type="text" id="search_query" name="search_query" placeholder="Search by website" required>
+            <button type="submit" name="search_password">Search</button>
+        </form>
+        <form action="logout.php" method="post" style="margin: 0;">
+            <button type="submit" class="logout-button">Logout</button>
+        </form>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>Welcome to Your Password Vault</h1>
@@ -237,8 +285,18 @@ $connection->close();
                 $includeLowercase = isset($_POST['include_lowercase']);
                 $includeSpecialChars = isset($_POST['include_special_chars']);
                 $generatedPassword = generateRandomPassword($length, $includeNumbers, $includeUppercase, $includeLowercase, $includeSpecialChars);
-                echo "<div class='form-group'><label for='generated_password'>Generated Password:</label><input type='text' id='generated_password' name='generated_password' value='$generatedPassword' readonly></div>";
+                $strengthText = checkPasswordStrength($generatedPassword);
+            
+                echo "<div class='form-group'>
+                        <label for='generated_password'>Generated Password:</label>
+                        <input type='text' id='generated_password' name='generated_password' value='$generatedPassword' readonly>
+                      </div>";
+                echo "<div class='form-group'>
+                        <label>Password Strength:</label>
+                        <input type='text' value='$strengthText' readonly>
+                      </div>";
             }
+            
             ?>
 
             <h2>Store Password</h2>
@@ -256,7 +314,7 @@ $connection->close();
                     <input type="text" id="website" name="website" required>
                 </div>
                 <div class="form-group">
-                    <label for="username">Username:</label>
+                    <label for="username">Username or Email :</label>
                     <input type="text" id="username" name="username" required>
                 </div>
                 <div class="form-group">
@@ -271,49 +329,10 @@ $connection->close();
                     <button type="submit" name="store_password" onclick="alert('Your Password has been stored')">Store Password</button>
                 </div>
             </form>
-
-            <h2>Search Password</h2>
-            <form action="dashboard.php" method="post">
-                <div class="form-group">
-                    <label for="search_query">Search by Website:</label>
-                    <input type="text" id="search_query" name="search_query" required>
-                </div>
-                <div class="form-group">
-                    <button type="submit" name="search_password">Search</button>
-                </div>
-            </form>
-
-            <form action="logout.php" method="post">
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
-
-            <?php if (!empty($searchResults)): ?>
-                <div class="search-results">
-                    <h2>Search Results</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Website</th>
-                                <th>Username</th>
-                                <th>Password</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($searchResults as $result): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($result['category_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($result['website']); ?></td>
-                                    <td><?php echo htmlspecialchars($result['username']); ?></td>
-                                    <td><?php echo htmlspecialchars($result['password']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
         </div>
     </div>
+    </div>
+
     <!-- JavaScript to toggle password visibility -->
     <script>
         const togglePassword = document.querySelector('#togglePassword');
@@ -331,7 +350,3 @@ $connection->close();
     </script>
 </body>
 </html>
-
-
-
-
