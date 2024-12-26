@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $message = "Passwords do not match";
         $messageClass = 'error';
     } else {
-        // Hash the password
+        // Hash the password using password_hash function that uses PASSWORD_dEFAULT parameter. This pamater states the bcrypt algorithm
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
         // Connect to the MySQL database
@@ -27,8 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 die("Connection failed: " . $connection->connect_error);
             }
 
-            // Prepare and bind
+            // Prepare statement allows us to use placeholder for values and bind_param links values to the respective placeholder in prepare statement
             $stmt = $connection->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
+           // "sss":data type of placeholders. Other options: s: String. i: Integer.d: Double (floating point).b: Blob (binary data).Since username,email and password are all string, SSS is used.
             $stmt->bind_param("sss", $username, $email, $hashedPassword);
 
             // Execute the statement

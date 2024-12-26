@@ -8,49 +8,54 @@ $connection = new mysqli('localhost', 'root', '', 'pms');
 if ($connection->connect_error) {
     die("Connection failed: " . $connection->connect_error);
 }
-print_r($_SESSION);
-// Define or fetch the master password
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
+    header("Location: login.php"); // Redirect to login if not authenticated
+    exit;
+}
+
 $masterPassword = $_SESSION['masterPassword'];
 
+// Decrypt function
 function decryptPassword($encryptedPassword, $masterPassword) {
-    $key = hash('sha256', $masterPassword);// Ensure binary hash
+    $key = hash('sha256', $masterPassword);
     $data = base64_decode($encryptedPassword);
-    
-    // Validate decoded data length
-    if (strlen($data) < 16) {
-        return "Invalid encrypted data"; // Handle invalid cases
+    if ($data === false || strlen($data) <= 16) {
+        return "Invalid encrypted data"; // Error handling
     }
-
-    $iv = substr($data, 0, 16);  // Extract the IV
-    $encryptedPassword = substr($data, 16); // Extract the encrypted part
+    $iv = substr($data, 0, 16);             // First 16 bytes are the IV
+    $encryptedPassword = substr($data, 16); // Remaining bytes
     return openssl_decrypt($encryptedPassword, 'aes-256-cbc', $key, 0, $iv);
 }
 
-// Check if the search query is set
-$searchResults = [];
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['search_query'])) {
-    $searchQuery = htmlspecialchars($_POST['search_query']);
-    $stmt = $connection->prepare("SELECT * FROM password WHERE website LIKE ? AND user_id = ?");
-    $searchTerm = "%$searchQuery%";
-    $stmt->bind_param("si", $searchTerm, $_SESSION['user_id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $row['password'] = decryptPassword($row['password'], $masterPassword);
-        $searchResults[] = $row;
-    }
-    $stmt->close();
+// Fetch all passwords for the logged-in user
+$user_id = $_SESSION['user_id'];
+$query = "SELECT p.category_id, c.name, p.website, p.username, p.password 
+          FROM password p 
+          INNER JOIN categories c ON p.category_id = c.id 
+          WHERE p.user_id = ?";
+$stmt = $connection->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$allPasswords = [];
+while ($row = $result->fetch_assoc()) {
+    $row['password'] = decryptPassword($row['password'], $masterPassword);
+    $allPasswords[] = $row;
 }
+
+$stmt->close();
 $connection->close();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results</title>
+    <title>Your Passwords</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -67,9 +72,8 @@ $connection->close();
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .header {
+        h1 {
             text-align: center;
-            margin-bottom: 20px;
         }
 
         table {
@@ -87,13 +91,6 @@ $connection->close();
             background-color: #f4f4f4;
         }
 
-        .no-results {
-            text-align: center;
-            margin: 20px 0;
-            font-size: 1.2em;
-            color: #555;
-        }
-
         a {
             text-decoration: none;
             color: #007bff;
@@ -106,30 +103,32 @@ $connection->close();
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Search Results</h1>
-        </div>
-        <?php if (!empty($searchResults)): ?>
+        <h1>Your Stored Passwords</h1>
+        <?php if (!empty($allPasswords)): ?>
             <table>
                 <thead>
                     <tr>
+                        <th>Category</th>
+                        <th>Website</th>
                         <th>Username</th>
                         <th>Password</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($searchResults as $row): ?>
+                    <?php foreach ($allPasswords as $passwordData): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($row['username']); ?></td>
-                            <td><?php echo $row['password']; ?></td>
+                            <td><?php echo htmlspecialchars($passwordData['name']); ?></td>
+                            <td><?php echo htmlspecialchars($passwordData['website']); ?></td>
+                            <td><?php echo htmlspecialchars($passwordData['username']); ?></td>
+                            <td><?php echo htmlspecialchars($passwordData['password']); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         <?php else: ?>
-            <p class="no-results">No passwords found for "<strong><?php echo htmlspecialchars($searchQuery); ?></strong>".</p>
+            <p>No passwords stored yet.</p>
         <?php endif; ?>
-        <p><a href="dashboard.php">Back to Dashboard</a></p>
+        <p><a href="dashboard.php">Add New Password</a></p>
     </div>
 </body>
 </html>

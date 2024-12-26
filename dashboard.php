@@ -1,3 +1,4 @@
+<!-- In this code, the encryptPassword and decryptPassword functions are used to encrypt and decrypt the passwords using the master password. The master password is assumed to be stored in the session ($_SESSION['master_password). Make sure to securely handle the master password and session management. -->
 <?php
 session_start();  // Start the session
 
@@ -17,6 +18,14 @@ if ($connection->connect_error) {
     die("Connection failed: " . $connection->connect_error);
 }
 
+// Encryption and decryption functions
+function encryptPassword($password, $masterPassword) {
+    $key = hash('sha256', $masterPassword);  // Create a 256-bit key
+    $iv = openssl_random_pseudo_bytes(16);  // Generate a 16-byte IV
+    $encryptedPassword = openssl_encrypt($password, 'aes-256-cbc', $key, 0, $iv);
+    return base64_encode($iv . $encryptedPassword);  // Store the IV with the encrypted password
+}
+print_r($_SESSION);
 // Function to check password strength
 function checkPasswordStrength($password) {
     if (strlen($password) > 15 &&
@@ -65,11 +74,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['store_password'])) {
     $username = htmlspecialchars($_POST['username']);
     $password = htmlspecialchars($_POST['password']);
 
+    // Encrypt the password with the master password from the session
+    $masterPassword = $_SESSION['masterPassword'];
+    $encryptedPassword = encryptPassword($password, $masterPassword);
+
     $stmt = $connection->prepare("INSERT INTO password (category_id, website, username, password, user_id) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssi", $category_id, $website, $username, $password, $_SESSION['user_id']);
+    $stmt->bind_param("isssi", $category_id, $website, $username, $encryptedPassword , $_SESSION['user_id']);
     $stmt->execute();
     $stmt->close();
 }
+
+
 
 // // Handle password search
 // $searchResults = [];
@@ -110,7 +125,24 @@ $connection->close();
             margin: 0;
             padding: 0;
         }
+        .button {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
 
+    .button:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
         .container {
             width: 97%;
             margin: 0 auto;
@@ -244,6 +276,11 @@ $connection->close();
     <div class="container">
         <div class="header">
             <h1>Welcome to Your Password Vault</h1>
+        </div>
+        <div>
+            <button>
+            <a href="viewPass.php" class="button">View your Passwords</a>
+            </button>
         </div>
         <div class="content">
             <h2>Generate Password</h2>

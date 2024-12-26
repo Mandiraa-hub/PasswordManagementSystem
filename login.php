@@ -1,5 +1,5 @@
 <?php
-//require('register.php');
+session_start();
 $message = '';
 $messageClass = '';
 
@@ -22,14 +22,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($result->num_rows == 1) {
             $user = $result->fetch_assoc();
-            error_log(print_r($user, true));
+
             // Verify password
-            echo $user['password'];
-           
-            if (password_verify($password,$user['password'])) {
-                $message = 'Login success';
-                $messageClass = 'success';
-                header('Location: dashboard.php');
+            if (password_verify($password, $user['password'])) {
+                // Login success
+                $_SESSION['user_id'] = $user['user_id']; // Assign user ID to session
+                $_SESSION['username'] = $user['username']; // Store username in session
+                $_SESSION['email'] = $user['email']; // Store email in session
+                $_SESSION['masterPassword'] = $user['password']; // Store password in session
+
+                // Set cookies if "Remember Me" is checked
+                if (isset($_POST['remember'])) {
+                    // Set cookies for 30 days (86400 seconds * 30 days)
+                    setcookie('email', $user['email'], time() + (86400 * 30), "/");
+                    setcookie('user_id', $user['user_id'], time() + (86400 * 30), "/"); 
+                }
+
+                header('Location: dashboard.php'); // Redirect to dashboard after login
                 exit();
             } else {
                 $message = 'Invalid email or password';
@@ -39,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = 'Invalid email or password';
             $messageClass = 'error';
         }
-        echo $password;
+
         // Close the statement and connection
         $stmt->close();
         $connection->close();
@@ -58,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Login | Secure Vault</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-* {
+   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -154,30 +163,30 @@ button, input {
 </head>
 <body>
     <fieldset>
-    <div class="login-container">
-        <h2>Login</h2>
-        <div id="message" class="message <?php echo $messageClass; ?>" style="display: <?php echo $message ? 'block' : 'none'; ?>;">
-            <?php echo $message; ?>
+        <div class="login-container">
+            <h2>Login</h2>
+            <div id="message" class="message <?php echo $messageClass; ?>" style="display: <?php echo $message ? 'block' : 'none'; ?>;">
+                <?php echo $message; ?>
+            </div>
+            <form action="login.php" method="post">
+                <div class="input-group">
+                    <label for="email"></label>
+                    <input type="email" id="email" name="email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password"></label>
+                    <input type="password" id="password" name="password" placeholder="Password" required>
+                </div>
+                <div class="input-group checkbox-group">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Remember Me</label>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+                <p class="create-account">
+                    Don't have an account? <a href="register.php">Create Account</a>
+                </p>
+            </form>
         </div>
-        <form action="login.php" method="post">
-            <div class="input-group">
-                <label for="email"></label>
-                <input type="email" id="email" name="email" placeholder="Email" required>
-            </div>
-            <div class="input-group">
-                <label for="password"></label>
-                <input type="password" id="password" name="password" placeholder="Password" required>
-            </div>
-            <div class="input-group checkbox-group">
-                <input type="checkbox" id="remember" name="remember">
-                <label for="remember">Remember Me</label>
-            </div>
-            <button type="submit" class="login-btn">Login</button>
-            <p class="create-account">
-                Don't have an account? <a href="register.html">Create Account</a>
-            </p>
-        </form>
-    </div>
     </fieldset>
 </body>
 </html>

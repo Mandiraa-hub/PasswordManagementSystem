@@ -4,8 +4,9 @@ session_start(); // Start the session
 // Unset all session variables
 $_SESSION = array();
 
-// If the session was propagated using a cookie, delete the session cookie
+// This checks if the session is using cookies to store the session ID.This ensures the session cookie is removed securely, minimizing the risk of session hijacking or leftover session data in the user's browser.
 if (ini_get("session.use_cookies")) {
+    //Fetches the current configuration for session cookies, including: path, domain,secure,httponly(cookie is accessible only through HTTP (not JavaScript))
     $params = session_get_cookie_params();
     setcookie(session_name(), '', time() - 42000,
         $params["path"], $params["domain"],
