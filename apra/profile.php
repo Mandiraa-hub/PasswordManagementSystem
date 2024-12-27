@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Database connection
-$connection = new mysqli('localhost', 'root', '', 'vault');
+$connection = new mysqli('localhost', 'root', '', 'pms');
 
 // Check connection
 if ($connection->connect_error) {
@@ -17,7 +17,7 @@ if ($connection->connect_error) {
 
 // Get user details from the database
 $user_id = $_SESSION['user_id'];
-$query = "SELECT username, email, created_at FROM users WHERE id = ?";
+$query = "SELECT username, email, created_at FROM users WHERE user_id = ?";
 $stmt = $connection->prepare($query);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();

@@ -101,12 +101,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1rem;
         }
 
-        .form-group button {
+        button {
             width: 100%;
             padding: 10px;
             margin-top: 10px;
             border-radius: 5px;
-            border: none;
+            border: 2px solid #2ecc71; /* Minimal green border */
             background: #2ecc71; /* Minimal green button */
             color: #000; /* Black text */
             cursor: pointer;
@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.1rem;
         }
 
-        .form-group button:hover {
+        button:hover {
             background: #27ae60; /* Darker green on hover */
         }
 
@@ -141,6 +141,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .store-btn:hover {
             background-color: #27ae60; /* Darker green on hover */
         }
+       
+        
     </style>
 </head>
 <body>
@@ -167,13 +169,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit">Generate</button>
             </form>
-
             <?php if (isset($generated_password)): ?>
                 <div class="generated-password">
-                    <strong>Generated Password:</strong> <?php echo htmlspecialchars($generated_password); ?>
+                    <strong>Generated Password:</strong>
+                    <span id="password-text"><?php echo htmlspecialchars($generated_password); ?></span>
+                    <span class="copy-icon" onclick="copyToClipboard()">&#128203;</span>
                 </div>
             <?php endif; ?>
         </div>
     </div>
+
+    <script>
+        function copyToClipboard() {
+            const passwordText = document.getElementById('password-text').innerText;
+            navigator.clipboard.writeText(passwordText).then(() => {
+                alert('Password copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy password.');
+                console.error(err);
+            });
+        }
+    </script>
 </body>
 </html>

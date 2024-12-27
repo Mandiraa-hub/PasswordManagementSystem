@@ -97,7 +97,7 @@ $profile_picture = isset($_SESSION['profile_picture']) ? htmlspecialchars($_SESS
 
         /* Sidebar Styling */
         .sidebar {
-            width: 260px;
+            width: 350px;
             background: #282828; /* Dark sidebar */
             color: #10b981;
             height: calc(100vh - 60px);
