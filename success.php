@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Card Example</title>
+    <title>Registration Success</title>
     <style>
         body {
             font-family: Arial, sans-serif;

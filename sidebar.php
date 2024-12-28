@@ -71,7 +71,7 @@
         <div class="Tools">
         <p><i class="fa-solid fa-screwdriver-wrench"></i>Tools</p>
         <a href="generate_password.php"><i class="fas fa-key"></i> Password Generator</a>
-        <a href="generate_password.php"><i class="fa-solid fa-check-to-slot"></i> Strength Checker</a>
+        <a href="strength_checker.php"><i class="fa-solid fa-check-to-slot"></i> Strength Checker</a>
         </div>
     </div>
 </body>

@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'header.php';
 include 'sidebar.php';
 // Check if the user is logged in by verifying session variables
@@ -76,7 +75,7 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : '';
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    padding: 40px;
     width: 100%; /* Full width */
     max-width: 900px;
     margin-bottom: 1px auto;

@@ -1,12 +1,11 @@
 <?php
-session_start();
+include 'header.php'; 
+include 'sidebar.php';
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
     header("Location: login.php"); // Redirect to login if not authenticated
     exit;
 }
 
-include 'header.php'; 
-include 'sidebar.php';
 $generated_password = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

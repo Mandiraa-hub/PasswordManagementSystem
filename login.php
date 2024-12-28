@@ -2,7 +2,10 @@
 session_start();
 $message = '';
 $messageClass = '';
-
+if (isset($_SESSION['user_id'])) {
+    header('Location: dashboard.php');
+    exit();
+}
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = htmlspecialchars($_POST['email']);  
     $password = $_POST['password'];  
@@ -30,6 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['username'] = $user['username']; // Store username in session
                 $_SESSION['email'] = $user['email']; // Store email in session
                 $_SESSION['masterPassword'] = $user['password']; // Store password in session
+                 // Store session information
+            $ip_address = $_SERVER['REMOTE_ADDR'];
+            $user_agent = $_SERVER['HTTP_USER_AGENT'];
+            $session_query = "INSERT INTO user_sessions (user_id, ip_address, user_agent) VALUES (?, ?, ?)";
+            $session_stmt = $connection->prepare($session_query);
+            $session_stmt->bind_param("iss", $user['user_id'], $ip_address, $user_agent);
+            $session_stmt->execute();
+            $session_stmt->close();
 
                 // Set cookies if "Remember Me" is checked
                 if (isset($_POST['remember'])) {
@@ -64,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Secure Vault</title>
+    <title>Login | PassVault</title>
     <link rel="stylesheet" href="styles.css">
     <style>
    * {
@@ -96,6 +107,7 @@ h2 {
 }
 .input-group {
     margin-bottom: 15px;
+    position: relative;
 }
 input[type="email"], input[type="password"] {
     width: 100%;
@@ -159,15 +171,20 @@ input[type="email"]:focus, input[type="password"]:focus {
 button, input {
     transition: background-color 0.3s, border-color 0.3s;
 }
+.toggle-password {
+            position: absolute;
+            top: 65%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #CBD5E0; /* Lighter gray */
+        }
      </style>
 </head>
 <body>
     <fieldset>
         <div class="login-container">
             <h2>Login</h2>
-            <div id="message" class="message <?php echo $messageClass; ?>" style="display: <?php echo $message ? 'block' : 'none'; ?>;">
-                <?php echo $message; ?>
-            </div>
             <form action="login.php" method="post">
                 <div class="input-group">
                     <label for="email"></label>
@@ -176,11 +193,15 @@ button, input {
                 <div class="input-group">
                     <label for="password"></label>
                     <input type="password" id="password" name="password" placeholder="Password" required>
+                    <span class="toggle-password" onclick="togglePasswordVisibility('password')">👁️</span>
                 </div>
                 <div class="input-group checkbox-group">
                     <input type="checkbox" id="remember" name="remember">
                     <label for="remember">Remember Me</label>
                 </div>
+                <div id="message" class="message <?php echo $messageClass; ?>" style="display: <?php echo $message ? 'block' : 'none'; ?>; color: red;">
+                <?php echo $message; ?>
+            </div>
                 <button type="submit" class="login-btn">Login</button>
                 <p class="create-account">
                     Don't have an account? <a href="register.php">Create Account</a>
@@ -188,5 +209,12 @@ button, input {
             </form>
         </div>
     </fieldset>
+    <script>
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
+            field.setAttribute('type', type);
+        }
+    </script>
 </body>
 </html>

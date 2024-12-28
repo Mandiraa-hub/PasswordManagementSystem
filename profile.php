@@ -31,8 +31,35 @@ if ($result->num_rows === 1) {
     exit();
 }
 
-$stmt->close();
+// Fetch session information
+$sessions_query = "SELECT ip_address, user_agent, timestamp FROM user_sessions WHERE user_id = ? ORDER BY timestamp DESC";
+$sessions_stmt = $connection->prepare($sessions_query);
+$sessions_stmt->bind_param("i", $user_id);
+$sessions_stmt->execute();
+$sessions_result = $sessions_stmt->get_result();
+
+$sessions = [];
+while ($row = $sessions_result->fetch_assoc()) {
+    $sessions[] = $row;
+}
+
+$sessions_stmt->close();
 $connection->close();
+
+// Function to get OS logo based on user agent
+function getOSLogo($user_agent) {
+    if (preg_match('/android/i', $user_agent)) {
+        return 'android.png';
+    } elseif (preg_match('/linux/i', $user_agent)) {
+        return 'linux.png';
+    } elseif (preg_match('/macintosh|mac os x/i', $user_agent)) {
+        return 'mac.png';
+    } elseif (preg_match('/windows|win32/i', $user_agent)) {
+        return 'windows.png';
+    } else {
+        return 'unknown.png';
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -57,7 +84,7 @@ $connection->close();
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
+            max-width: 800px;
             width: 100%;
         }
         h2 {
@@ -90,6 +117,30 @@ $connection->close();
         .back-button:hover {
             background-color: #28A745; /* Darker Green */
         }
+        .sessions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .sessions-table th, .sessions-table td {
+            padding: 10px;
+            border: 1px solid #444;
+            text-align: left;
+        }
+        .sessions-table th {
+            background-color: #32CD32; /* Neon Green */
+            color: #1A202C; /* Dark text */
+        }
+        .sessions-table tr:nth-child(even) {
+            background-color: #2a2a2a; /* Darker alternating row color */
+        }
+        .sessions-table tr:hover {
+            background-color: #444; /* Hover effect */
+        }
+        .os-logo {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 </head>
 <body>
@@ -104,6 +155,27 @@ $connection->close();
         <div class="profile-item">
             <span>Joined On:</span> <?php echo htmlspecialchars($user['created_at']); ?>
         </div>
+        <h2>Session Information</h2>
+        <table class="sessions-table">
+            <thead>
+                <tr>
+                    <th>SN</th>
+                    <th>IP Address</th>
+                    <th>User Agent</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($sessions as $index => $session): ?>
+                    <tr>
+                        <td><?php echo $index + 1; ?></td>
+                        <td><?php echo htmlspecialchars($session['ip_address']); ?></td>
+                        <td><?php echo htmlspecialchars($session['user_agent']); ?></td>
+                        <td><?php echo htmlspecialchars($session['timestamp']); ?></td>
+                        </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
         <a href="dashboard.php" class="back-button">Back to Dashboard</a>
     </div>
 </body>

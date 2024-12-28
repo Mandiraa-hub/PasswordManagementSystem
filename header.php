@@ -1,14 +1,12 @@
 <?php
 // Check if the user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
-}
-
+// if (!isset($_SESSION['user_id'])) {
+//     header('Location: login.php');
+//     exit();
+// }
+session_start();
 // Get user info from session
-$user_name = htmlspecialchars($_SESSION['username']);
-$profile_picture = isset($_SESSION['profile_picture']) ? htmlspecialchars($_SESSION['profile_picture']) : 'path/to/default/profile.png'; // Default image
-?>
+$user_name = htmlspecialchars($_SESSION['username']);?>
 <style>
     /* Header Styling */
     .header {
@@ -116,7 +114,7 @@ $profile_picture = isset($_SESSION['profile_picture']) ? htmlspecialchars($_SESS
 </style>
 
 <div class="header">
-    <a href="dashboard.php" class="logo">Password Vault</a>
+    <a href="dashboard.php" class="logo">PassVault</a>
     <div class="profile">
         <div class="profile-info">
             <a href="profile.php">

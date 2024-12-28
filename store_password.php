@@ -1,12 +1,11 @@
 <?php
-session_start();
+include 'header.php';
+include 'sidebar.php';
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 $message = '';
-include 'header.php';
-include 'sidebar.php';
 $connection = new mysqli('localhost', 'root', '', 'pms');
 
 if ($connection->connect_error) {
@@ -195,6 +194,12 @@ while ($row = $result->fetch_assoc()) {
                 document.body.removeChild(messageBox);
             }, 5000); // Auto-hide after 5 seconds
         }
+        
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
+            field.setAttribute('type', type);
+        }
     </script>
 </head>
 <body>
@@ -221,6 +226,8 @@ while ($row = $result->fetch_assoc()) {
                 <div class="form-group">
                     <label for="password">Password:</label>
                     <input type="text" id="password" name="password" required>
+                    <!-- <span class="toggle-password" onclick="togglePasswordVisibility('password')">👁️</span>
+                -->
                 </div>
                 <div class="form-group">
                     <button type="submit" name="store_password">Store Password</button>
