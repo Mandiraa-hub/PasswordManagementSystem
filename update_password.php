@@ -1,7 +1,7 @@
 <?php
 $message = '';
-
-session_start();  // Start the session
+include 'header.php'; 
+include 'sidebar.php';
 
 // Check if the user is logged in by verifying session variables
 if (!isset($_SESSION['user_id'])) {
@@ -9,7 +9,6 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
-
 
 // Database connection
 $connection = new mysqli('localhost', 'root', '', 'pms');
@@ -19,6 +18,8 @@ if ($connection->connect_error) {
     die("Connection failed: " . $connection->connect_error);
 }
 
+$masterPassword = $_SESSION['masterPassword'];
+
 // Encryption and decryption functions
 function encryptPassword($password, $masterPassword) {
     $key = hash('sha256', $masterPassword);  // Create a 256-bit key
@@ -26,22 +27,52 @@ function encryptPassword($password, $masterPassword) {
     $encryptedPassword = openssl_encrypt($password, 'aes-256-cbc', $key, 0, $iv);
     return base64_encode($iv . $encryptedPassword);  // Store the IV with the encrypted password
 }
-//print_r($_SESSION);
 
-// Handle password storage
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['store_password'])) {
-    $category_id = $_POST['category'];
+function decryptPassword($encryptedPassword, $masterPassword) {
+    $data = base64_decode($encryptedPassword);
+    $iv = substr($data, 0, 16);  // Extract the IV
+    $encryptedPassword = substr($data, 16);  // Extract the encrypted password
+    $key = hash('sha256', $masterPassword);  // Create the decryption key
+    return openssl_decrypt($encryptedPassword, 'aes-256-cbc', $key, 0, $iv);  // Decrypt the password
+}
+
+// Handle password update
+$message = '';
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_password'])) {
+    $password_id = intval($_GET['id']);
+    $category_id = intval($_POST['category']);
     $website = htmlspecialchars($_POST['website']);
     $username = htmlspecialchars($_POST['username']);
     $password = htmlspecialchars($_POST['password']);
 
     // Encrypt the password with the master password from the session
-    $masterPassword = $_SESSION['masterPassword'];
     $encryptedPassword = encryptPassword($password, $masterPassword);
 
-    $stmt = $connection->prepare("INSERT INTO password (category_id, website, username, password, user_id) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssi", $category_id, $website, $username, $encryptedPassword , $_SESSION['user_id']);
+    // Update the password in the database
+    $stmt = $connection->prepare(
+        "UPDATE password 
+         SET category_id = ?, website = ?, username = ?, password = ? 
+         WHERE id = ? AND user_id = ?"
+    );
+    $stmt->bind_param("isssii", $category_id, $website, $username, $encryptedPassword, $password_id, $_SESSION['user_id']);
+    if ($stmt->execute()) {
+        $message = 'Password updated successfully! View Your Password ...';
+
+    } else {
+        $message = 'Failed to update the password. Please try again.';
+    }
+    $stmt->close();
+}
+
+// Prefill password details
+$password_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$passwordDetails = null;
+if ($password_id > 0) {
+    $stmt = $connection->prepare("SELECT * FROM password WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $password_id, $_SESSION['user_id']);
     $stmt->execute();
+    $result = $stmt->get_result();
+    $passwordDetails = $result->fetch_assoc();
     $stmt->close();
 }
 
@@ -158,44 +189,42 @@ while ($row = $result->fetch_assoc()) {
     </style>
 </head>
 <body>
-    <?php include 'sidebar.php'; ?>
     <div class="content">
         <div class="glass-card">
             <h2>Store Password</h2>
-            <form action="store_password.php" method="post">
+            <form action="update_password.php?id=<?php echo $password_id; ?>" method="POST">
+                <input type="hidden" name="password_id" value="<?php echo isset($passwordDetails['id']) ? $passwordDetails['id'] : ''; ?>">
                 <div class="form-group">
                     <label for="category">Category:</label>
                     <select id="category" name="category" required>
                         <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
+                            <option value="<?php echo $category['id']; ?>" <?php echo isset($passwordDetails['category_id']) && $passwordDetails['category_id'] == $category['id'] ? 'selected' : ''; ?>>
+                                <?php echo $category['name']; ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="website">Website:</label>
-                    <input type="text" id="website" name="website" required>
+                    <input type="text" id="website" name="website" readonly required value="<?php echo isset($passwordDetails['website']) ? $passwordDetails['website'] : ''; ?>">
                 </div>
                 <div class="form-group">
-                    <label for="username">Username or Email :</label>
-                    <input type="text" id="username" name="username" required>
+                    <label for="username">Username or Email:</label>
+                    <input type="text" id="username" name="username" readonly required value="<?php echo isset($passwordDetails['username']) ? $passwordDetails['username'] : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label for="password">Password:</label>
-                    <div style="position: relative;">
-                        <input type="text" id="password" name="password" required style="padding-right: 30px;">
-                        <i class="fas fa-eye toggle-password" id="togglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
-                    </div>
-                    
+                    <input type="text" id="password" name="password" required value="<?php echo isset($passwordDetails['password']) ? decryptPassword($passwordDetails['password'], $_SESSION['masterPassword']) : ''; ?>">
                 </div>
                 <div class="form-group">
-                    <button type="submit" name="store_password" onclick="alert('Your Password has been stored')">Store Password</button>
+                    <button type="submit" name="update_password">Update Password</button>
                 </div>
             </form>
-    
+
             <?php if (!empty($message)): ?>
-                <div class="message">&#128274; <?php echo $message; ?></div>
+                <div class="message"><?php echo $message; ?></div>
             <?php endif; ?>
-            <a href="generate_password.php" class="store-btn">Back to Generate Password</a>
+            <a href="view_passwords.php" class="store-btn">View Your Password</a>
         </div>
     </div>
 </body>

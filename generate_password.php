@@ -1,4 +1,14 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
+    header("Location: login.php"); // Redirect to login if not authenticated
+    exit;
+}
+
+include 'header.php'; 
+include 'sidebar.php';
+$generated_password = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password_length = intval($_POST['password_length']);
     $include_numbers = isset($_POST['include_numbers']);
@@ -39,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return 'Weak'; // Mark as weak otherwise
     }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -67,10 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .glass-card {
             background: #1a1a1a; /* Dark card background */
             border-radius: 10px;
-            padding: 30px;
+            padding: 50px;
             width: 90%;
             max-width: 800px;
-            margin: auto;
+            margin: 50px auto;
         }
 
         h2 {
@@ -90,7 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #2ecc71; /* Minimal green for labels */
         }
 
-        .form-group input {
+        .form-group input[type="checkbox"] {
+            margin-right: 10px; /* Space between checkbox and label */
+            vertical-align: middle; /* Align the checkbox with text */
+        }
+
+        .form-group input[type="number"] {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -141,12 +155,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .store-btn:hover {
             background-color: #27ae60; /* Darker green on hover */
         }
-       
-        
     </style>
 </head>
 <body>
-    <?php include 'sidebar.php'; ?>
     <div class="content">
         <div class="glass-card">
             <h2>Generate Password</h2>
@@ -173,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="generated-password">
                     <strong>Generated Password:</strong>
                     <span id="password-text"><?php echo htmlspecialchars($generated_password); ?></span>
-                    <span class="copy-icon" onclick="copyToClipboard()">&#128203;</span>
+                    <span class="copy-icon" onclick="copyToClipboard()" style="cursor: pointer;">&#128203;</span>
                 </div>
             <?php endif; ?>
         </div>
