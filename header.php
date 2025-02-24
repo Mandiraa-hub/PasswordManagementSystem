@@ -4,7 +4,7 @@
 //     header('Location: login.php');
 //     exit();
 // }
-session_start();
+
 // Get user info from session
 $user_name = htmlspecialchars($_SESSION['username']);?>
 <style>

@@ -1,10 +1,11 @@
 <?php
-include 'header.php'; 
-include 'sidebar.php';
+session_start();
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
     header("Location: login.php"); // Redirect to login if not authenticated
     exit;
 }
+include 'header.php'; 
+include 'sidebar.php';
 
 $generated_password = '';
 
@@ -68,17 +69,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .content {
             flex: 1;
-            padding: 30px;
+            padding: 60px 50px 30px 300px;
             overflow-y: auto;
         }
 
         .glass-card {
             background: #1a1a1a; /* Dark card background */
             border-radius: 10px;
-            padding: 50px;
+            padding: 30px;
             width: 90%;
             max-width: 800px;
             margin: 50px auto;
+           
         }
 
         h2 {

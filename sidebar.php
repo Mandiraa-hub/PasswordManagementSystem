@@ -67,7 +67,6 @@
     <div class="sidebar">
         <a href="store_password.php"><i class="fas fa-save"></i> Store Password</a>
         <a href="view_passwords.php"><i class="fas fa-eye"></i> View Saved Passwords</a>
-        <a href="search_password.php"><i class="fas fa-search"></i> Search Your Passwords</a>
         <div class="Tools">
         <p><i class="fa-solid fa-screwdriver-wrench"></i>Tools</p>
         <a href="generate_password.php"><i class="fas fa-key"></i> Password Generator</a>

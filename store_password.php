@@ -1,10 +1,11 @@
 <?php
-include 'header.php';
-include 'sidebar.php';
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
+session_start();
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
+    header("Location: login.php"); // Redirect to login if not authenticated
+    exit;
 }
+include 'header.php'; 
+include 'sidebar.php';
 $message = '';
 $connection = new mysqli('localhost', 'root', '', 'pms');
 

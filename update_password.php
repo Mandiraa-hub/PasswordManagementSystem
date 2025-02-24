@@ -1,15 +1,12 @@
 <?php
-$message = '';
+session_start();
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
+    header("Location: login.php"); // Redirect to login if not authenticated
+    exit;
+}
 include 'header.php'; 
 include 'sidebar.php';
-
-// Check if the user is logged in by verifying session variables
-if (!isset($_SESSION['user_id'])) {
-    // If the user is not logged in, redirect to the login page
-    header('Location: login.php');
-    exit();
-}
-
+$message = '';
 // Database connection
 $connection = new mysqli('localhost', 'root', '', 'pms');
 

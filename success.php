@@ -7,7 +7,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #1A202C; /* Dark Blue background */
+            color: #E2E8F0; /* Light Gray text */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -16,7 +17,7 @@
         }
 
         .card {
-            background-color: #fff;
+            background-color: #2D3748; /* Slightly lighter Dark Blue */
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
@@ -26,21 +27,42 @@
 
         .card h2 {
             margin-top: 0;
-            color: #333;
+            color: #32CD32; /* Neon Green */
         }
 
         .card p {
-            color: #666;
+            color: #E2E8F0; /* Light Gray text */
             font-size: 14px;
             line-height: 1.5;
+        }
+
+        .card button {
+            background-color: #32CD32; /* Neon Green */
+            color: #1A202C; /* Dark text */
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .card button:hover {
+            background-color: #28A745; /* Darker green on hover */
+        }
+
+        .card a {
+            color: #1A202C; /* Dark text */
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Thank you for registering</h2>
-        <p> You may now proceed with login
-        <button><a href="login.php">Login</a></button></p>
+        <p>You may now proceed with login</p>
+        <button><a href="login.php">Login</a></button>
     </div>
 </body>
 </html>

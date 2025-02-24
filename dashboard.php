@@ -1,5 +1,11 @@
 <?php
-include 'header.php';
+session_start(); // Ensure the session is started
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php"); // Redirect to login if not authenticated
+    exit;
+}
+include 'header.php'; 
 include 'sidebar.php';
 ?>
 <!DOCTYPE html>

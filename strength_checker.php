@@ -1,12 +1,11 @@
 <?php
-include 'header.php'; 
-include 'sidebar.php';
-
-// Check if the user is logged in by verifying session variables
+session_start();
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
     header("Location: login.php"); // Redirect to login if not authenticated
     exit;
 }
+include 'header.php'; 
+include 'sidebar.php';
 
 // Database connection
 $connection = new mysqli('localhost', 'root', '', 'pms');
@@ -109,92 +108,80 @@ foreach ($allPasswords as $passwordData) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            background: #000000; /* Black background */
-            color: #2ecc71; /* Navy green text */
-            font-family: 'Arial', sans-serif; /* Clean font */
-            height: 100vh;
-            margin: 0;
-            display: flex;
-        }
 
-        .sidebar {
-            width: 250px;
-            background: #1a1a1a; /* Dark sidebar background */
-            padding: 20px;
-            box-sizing: border-box;
-        }
+body {
+    background: #000000; /* Black background */
+    color: #2ecc71; /* Navy green text */
+    font-family: 'Arial', sans-serif;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+}
 
-        .content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-            box-sizing: border-box;
-        }
+/* Content Wrapper - Increased Padding to Avoid Clutter */
+.content {
+    flex: 1;
+    padding: 60px 50px 30px 300px; /* Adjusted padding: top, right, bottom, left */
+    overflow-y: auto;
+    box-sizing: border-box;
+}
 
-        .container {
-            background: #1a1a1a; /* Dark card background */
-            border-radius: 10px;
-            padding: 20px;
-            width: 100%;
-            max-width: 800px;
-            margin: auto;
-        }
+/* Strength Checker Card - Better Centering and More Space */
+.container {
+    background: #1a1a1a; /* Dark card background */
+    border-radius: 10px;
+    padding: 30px;
+    width: 100%;
+    max-width: 900px;
+    margin: 50px auto; /* Add margin for better spacing */
+}
 
-        h2 {
-            text-align: center;
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-        }
+/* Table Adjustments */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px; /* Adds space above the table */
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+th, td {
+    padding: 15px;
+    text-align: left;
+    border: 1px solid #444;
+}
 
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border: 1px solid #444; /* Slightly lighter border */
-        }
+th {
+    background: #2ecc71;
+    color: #000000;
+    font-weight: bold;
+}
 
-        th {
-            background: #2ecc71; /* Navy green header */
-            color: #000000; /* Black text */
-            font-weight: bold;
-        }
+tr:nth-child(even) {
+    background: #2a2a2a;
+}
 
-        tr:nth-child(even) {
-            background: #2a2a2a; /* Darker alternating row color */
-        }
+tr:hover {
+    background: #444;
+}
 
-        tr:hover {
-            background: #444; /* Hover effect */
-        }
-
-        .score {
-            font-weight: bold;
-        }
-
+/* Chart Centering */
+.chart-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+      
         .missing {
             color: #e74c3c; /* Bright red for missing criteria */
         }
 
-        .chart-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
         .chart {
-            max-width: 300px;
+            max-width: 600px;
         }
     </style>
 </head>
 <body>
     <div class="content">
         <div class="container">
-            <h2>Password Strength Checker</h2>
             <div class="chart-container">
                 <canvas id="strengthChart" class="chart"></canvas>
             </div>

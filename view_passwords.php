@@ -1,12 +1,11 @@
 <?php
-include 'header.php';
-include 'sidebar.php';
-// Check if the user is logged in by verifying session variables
+session_start();
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['masterPassword'])) {
     header("Location: login.php"); // Redirect to login if not authenticated
     exit;
 }
-
+include 'header.php'; 
+include 'sidebar.php';
 // Database connection
 $connection = new mysqli('localhost', 'root', '', 'pms');
 
@@ -60,53 +59,64 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : '';
     <title>View Passwords</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <style>
-      body {
-    background: #000000; /* Black background */
-    color: #2ecc71; /* Navy green text */
-    font-family: 'Arial', sans-serif; /* Clean font */
+ body {
+    background: #000000;
+    color: #2ecc71;
+    font-family: 'Arial', sans-serif;
     height: 100vh;
     margin: 0;
     display: flex;
-    overflow-x: hidden; /* Prevent horizontal scrolling */
+    overflow-x: hidden; /* 🔹 Hides any horizontal scrolling */
 }
 
+/* Ensure the content does not overflow */
 .content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    flex: 1;
     padding: 40px;
-    width: 100%; /* Full width */
-    max-width: 900px;
-    margin-bottom: 1px auto;
+    width: calc(100% - 250px); /* 🔹 Ensures content width adjusts properly */
+    margin-left: 250px; /* 🔹 Keeps content aligned with sidebar */
+    margin-top: 80px;
+    min-height: 100vh;
+    overflow-x: hidden; /* 🔹 Prevents extra horizontal scrollbar */
+    overflow-y: auto;
 }
 
+/* Ensure the table does not overflow the glass card */
 .glass-card {
-    background: #1a1a1a; /* Dark card background */
+    background: #1a1a1a;
     border-radius: 10px;
-    padding: 2px ;
-    width: 100%; /* Full width */
+    padding: 20px;
+    width: 100%;
     max-width: 1000px;
-    margin-right:0px ;
-    margin-left:900px ;
-  
+    margin: auto;
+    position: relative;
+    
+}
+
+/* Ensure tables are responsive without causing extra scrollbars */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    table-layout: auto; /* 🔹 Change to "auto" so column width adjusts dynamically */
+}
+
+/* Ensure table cells show full content */
+th, td {
+    word-wrap: break-word; /* 🔹 Allows text to wrap */
+    overflow: hidden;
+    text-overflow: ellipsis; /* 🔹 Prevents unnecessary cut-off */
+    white-space: normal; /* 🔹 Ensures content wraps instead of being cut off */
+    padding: 10px; /* 🔹 Increase padding for better readability */
+    text-align: left;
+    border: 1px solid #444;
+    max-width: 300px; /* 🔹 Prevents excessive column stretching */
 }
 
 h2 {
     text-align: center;
     font-size: 1.8rem;
     margin-bottom: 20px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 5px;
-    text-align: left;
-    border: 1px solid #444; /* Slightly lighter border */
 }
 
 th {
@@ -119,9 +129,7 @@ tr:nth-child(even) {
     background: #2a2a2a; /* Darker alternating row color */
 }
 
-tr:hover {
-    background: #444; /* Hover effect */
-}
+
 
 .btn, .cbtn {
     display: inline-block;
@@ -174,17 +182,32 @@ tr:hover {
 .actions-cell {
     width: 150px; /* Adjust the width as needed */
 }
+.search-bar {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #2ecc71;
+            background: rgba(46, 204, 113, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+}
     </style>
 </head>
 <body>
     <div class="content">
         <div class="glass-card">
         <h2>Stored Passwords</h2>
+
+<input type="text" id="search-bar" class="search-bar" onkeyup="searchPasswords()" placeholder="Search by website or username">
+
+
             <?php if (!empty($message)): ?>
                 <div class="message"><?php echo $message; ?></div>
             <?php endif; ?>
             <?php if (!empty($allPasswords)): ?>
-          <table>
+          <table id="passwordTable">
                 <thead>
                     <tr>
                         <th>Category</th>
@@ -241,6 +264,23 @@ document.execCommand('copy');
 document.body.removeChild(textarea);
 alert('Password copied to clipboard');
 }
+
+ // Function to filter passwords in the table
+ function searchPasswords() {
+            let input = document.getElementById("search-bar").value.toLowerCase();
+            let table = document.getElementById("passwordTable");
+            let rows = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
+                let website = rows[i].getElementsByTagName("td")[1].textContent.toLowerCase();
+                let username = rows[i].getElementsByTagName("td")[2].textContent.toLowerCase();
+                if (website.includes(input) || username.includes(input)) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
 </script>
 </body>
 </html>
